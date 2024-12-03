@@ -1,1 +1,169 @@
 
+Quarto HW
+STAT 184
+
+Author
+Steven Dong
+
+Published
+November 20, 2024
+
+Question 1
+
+
+Question 2
+library(palmerpenguins)
+library(ggplot2)
+ggplot(penguins, aes(x = bill_length_mm, y = bill_depth_mm, color = species)) +
+  geom_point(alpha = 0.7) +
+  labs(title = "Bill Length vs. Bill Depth by Species",
+       x = "Bill Length (mm)",
+       y = "Bill Depth (mm)",
+       color = "Species")
+
+Warning: Removed 2 rows containing missing values or values outside the scale range
+(`geom_point()`).
+
+
+Question 3
+###a) For the year 2007, find the average price of tortillas across all of these 6 states together
+
+library(tidyverse)
+
+Warning: package 'tidyverse' was built under R version 4.4.2
+── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.4     ✔ readr     2.1.5
+✔ forcats   1.0.0     ✔ stringr   1.5.1
+✔ lubridate 1.9.3     ✔ tibble    3.2.1
+✔ purrr     1.0.2     ✔ tidyr     1.3.1
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+library(dplyr)
+#Read csv file
+tortilla_data <- read_csv("tortilla_data.csv", show_col_types = FALSE)
+#Calculate average price in 2007
+avg_price_2007 <- tortilla_data %>%
+  filter(year == 2007) %>%
+  summarize(Average_Price_2007 = mean(price, na.rm = TRUE))
+avg_price_2007
+
+# A tibble: 1 × 1
+  Average_Price_2007
+               <dbl>
+1               7.68
+###b) For the year 2024, find the average price of tortillas across all of these 6 states together.
+
+#Calculate average price in 2024
+avg_price_2024 <- tortilla_data %>%
+  filter(year == 2024) %>%
+  summarize(Average_Price_2024 = mean(price, na.rm = TRUE))
+avg_price_2024
+
+# A tibble: 1 × 1
+  Average_Price_2024
+               <dbl>
+1               20.5
+###c) Find the percent change in the average price of tortillas across all six states together from the year 2007 to 2024.
+
+#calculates the percent change
+percent_change <- ((avg_price_2024$Average_Price_2024 - avg_price_2007$Average_Price_2007) / avg_price_2007$Average_Price_2007) * 100
+percent_change
+
+[1] 166.4113
+###d) Make a plot that shows the average price of tortillas (across all six states together) each year from the years 2007 to 2024. Add an appropriate title for this figure using Quarto.
+
+#calculate the average price for each year from 2007 to 2024
+avg_price_each_year <- tortilla_data %>%
+  #filter for years 2007 to 2024
+  filter(year >= 2007 & year <= 2024) %>%  
+  #group by year
+  group_by(year) %>%  
+  #calculate the mean price for each year
+  summarize(Average_Price = mean(price, na.rm = TRUE))  
+
+#create plot
+ggplot(avg_price_each_year, aes(x = year, y = Average_Price)) +
+  #line plot for average price
+  geom_line() + 
+  #points for each year
+  geom_point() +  
+  labs(
+    #title
+    title = "Average Price of Tortillas Across All Six States (2007-2024)",  
+    x = "Year",
+    y = "Average Price"
+  )
+
+
+
+###e) For the year 2016, provide summary statistics for each of the six states’ price of tortillas. Make a table of the average price of tortillas in each state in 2016. Add a title for this table using Quarto. Also make side-by-side boxplots for each state in 2016. Add an appropriate title and caption for this figure using Quarto.
+
+#gets data from 2016
+data_2016 <- tortilla_data %>%
+  filter(year == 2016)
+#summary stats in 2016
+summary_2016 <- data_2016 %>%
+  group_by(state) %>%
+  summarize(
+    Average_Price = mean(price, na.rm = TRUE),
+    Median_Price = median(price, na.rm = TRUE),
+    Min_Price = min(price, na.rm = TRUE),
+    Max_Price = max(price, na.rm = TRUE),
+    SD_Price = sd(price, na.rm = TRUE)
+  )
+
+Summary Statistics for Tortilla Prices in 2016 by State
+#shows table with title
+summary_2016
+
+# A tibble: 6 × 6
+  state          Average_Price Median_Price Min_Price Max_Price SD_Price
+  <chr>                  <dbl>        <dbl>     <dbl>     <dbl>    <dbl>
+1 BajaCalifornia          13.9         10.9      9.63      17.7     3.64
+2 Chihuahua               13.1         11.4     11.1       15       1.83
+3 Coahuila                11.7         12.6      9.77      13.4     1.48
+4 NuevoLeon               12.1         14       10.0       14.3     1.95
+5 Sonora                  13.5         10.3      9.93      19       3.71
+6 Tamaulipas              13.3         11.5     10.5       16       2.17
+#create and display the boxplots for each state in 2016
+ggplot(data_2016, aes(x = state, y = price, fill = state)) +
+  geom_boxplot() +
+  labs(
+    title = "Boxplots of Tortilla Prices by State in 2016",
+    x = "State",
+    y = "Price of Tortillas",
+    caption = "Boxplot represents the distribution of tortilla prices in 2016 for each state."
+  ) +
+  #makes it so the labels aren't bunched up
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+###f) For the state of Nuevo León, make an overlapping plot of the price of tortillas each year from 2007 to 2024 based on store type (i.e., small businesses vs. large corporations). Comment on your findings. Add an appropriate title and caption for this figure using Quarto.
+
+#filter Nuevo León
+nuevoleon_data <- tortilla_data %>%
+  filter(state == "NuevoLeon", year >= 2007 & year <= 2024)
+
+#create the overlapping plot
+ggplot(nuevoleon_data, aes(x = year, y = price, color = storeType)) +
+  #line plot
+  geom_line() + 
+  geom_point() +
+  labs(
+    title = "Tortilla Prices in Nuevo León (2007–2024) by Store Type",
+    x = "Year",
+    y = "Price of Tortillas",
+    color = "Store Type",
+    caption = "Data shows yearly tortilla price trends for small businesses and large corporations."
+  )
+
+
+
+###g) Include a picture of a tortilla. Add a caption in which you cite the source from which the picture originated. https://www.seriouseats.com/flour-tortillas-northern-mexico
+
+###h) Rick Chavelas via Kaggle at https://www.kaggle.com/datasets/richave/tortilla-prices-in-mexico
+
+
